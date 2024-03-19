@@ -52,13 +52,13 @@ func main() {
   logger := logging.GetDefaultLogger()
 
   c := gs7.NewClientBuilder().
-  PlcType(common.S1500).
-  Host(host).
-  Port(port).
-  Port(102).
-  Rack(rack).
-  Slot(slot).
-  Build()
+    PlcType(common.S1500).
+    Host(host).
+    Port(port).
+    Port(102).
+    Rack(rack).
+    Slot(slot).
+    Build()
   
   _, err := c.Connect().Wait()
   if err != nil {
