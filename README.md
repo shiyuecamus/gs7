@@ -137,11 +137,11 @@ Distributed under the MIT License. See [`LICENSE`](./LICENSE) for more informati
 
 The dependencies used in this project are as follows:
 
-| Number | Dependency                                | Version |  License   |     Date     | Copyright     |
-|:------:|:------------------------------------------|---------|:----------:|:------------:|:--------------|
-|   1    | [gnet](https://github.com/panjf2000/gnet) | 2.3.5   | Apache-2.0 | 2019-present | Andy Pan      |
-|   2    | [cast](https://github.com/spf13/cast)     | 1.6.0   |    MIT     |     2014     | Steve Francia |
-|   3    | [zap](https://github.com/uber-go/zap)     | 1.27.0  |    MIT     |  2016-2017   | Steve Francia |
+| Number | Dependency                                | Version |  License   |     Date     | Copyright         |
+|:------:|:------------------------------------------|---------|:----------:|:------------:|:------------------|
+|   1    | [gnet](https://github.com/panjf2000/gnet) | 2.3.5   | Apache-2.0 | 2019-present | Andy Pan          |
+|   2    | [cast](https://github.com/spf13/cast)     | 1.6.0   |    MIT     |     2014     | Steve Francia     |
+|   3    | [zap](https://github.com/uber-go/zap)     | 1.27.0  |    MIT     |  2016-2017   | Uber Technologies |
 
 ## Sponsor
 
