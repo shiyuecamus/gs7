@@ -1,9 +1,9 @@
 package _examples
 
 import (
-	"gs7"
-	"gs7/common"
-	"gs7/logging"
+	"github.com/shiyuecamus/gs7"
+	"github.com/shiyuecamus/gs7/common"
+	"github.com/shiyuecamus/gs7/logging"
 	"time"
 )
 

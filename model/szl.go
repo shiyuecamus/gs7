@@ -6,7 +6,7 @@ package model
 
 import (
 	"encoding/json"
-	"gs7/common"
+	"github.com/shiyuecamus/gs7/common"
 )
 
 type Catalog struct {

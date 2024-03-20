@@ -1,4 +1,4 @@
-module gs7
+module github.com/shiyuecamus/gs7
 
 go 1.21
 

@@ -6,10 +6,10 @@ package gs7
 
 import (
 	"github.com/panjf2000/gnet/v2"
-	"gs7/common"
-	"gs7/logging"
-	"gs7/model"
-	"gs7/util"
+	"github.com/shiyuecamus/gs7/common"
+	"github.com/shiyuecamus/gs7/logging"
+	"github.com/shiyuecamus/gs7/model"
+	"github.com/shiyuecamus/gs7/util"
 	"sync"
 	"time"
 )

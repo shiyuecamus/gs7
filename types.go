@@ -8,9 +8,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"github.com/shiyuecamus/gs7/common"
+	"github.com/shiyuecamus/gs7/util"
 	"github.com/spf13/cast"
-	"gs7/common"
-	"gs7/util"
 	"time"
 	"unicode/utf16"
 )

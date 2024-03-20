@@ -6,8 +6,8 @@ package model
 
 import (
 	"encoding/binary"
-	"gs7/common"
-	"gs7/util"
+	"github.com/shiyuecamus/gs7/common"
+	"github.com/shiyuecamus/gs7/util"
 )
 
 type TPKT struct {

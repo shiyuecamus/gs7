@@ -4,7 +4,7 @@
 
 package gs7
 
-import "gs7/model"
+import "github.com/shiyuecamus/gs7/model"
 
 type RequestContext interface {
 	PutError(err error)

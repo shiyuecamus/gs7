@@ -5,8 +5,8 @@
 package model
 
 import (
-	"gs7/common"
-	"gs7/util"
+	"github.com/shiyuecamus/gs7/common"
+	"github.com/shiyuecamus/gs7/util"
 )
 
 type COTPData struct {

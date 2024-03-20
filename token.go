@@ -5,9 +5,9 @@
 package gs7
 
 import (
-	"gs7/common"
-	"gs7/model"
-	"gs7/util"
+	"github.com/shiyuecamus/gs7/common"
+	"github.com/shiyuecamus/gs7/model"
+	"github.com/shiyuecamus/gs7/util"
 	"sync"
 	"time"
 )

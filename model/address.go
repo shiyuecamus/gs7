@@ -5,7 +5,7 @@
 package model
 
 import (
-	"gs7/common"
+	"github.com/shiyuecamus/gs7/common"
 	"regexp"
 	"strconv"
 	"strings"
