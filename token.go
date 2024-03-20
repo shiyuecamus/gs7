@@ -87,7 +87,7 @@ const (
 	TtBlockListType
 	TtBlockInfo
 	TtClockRead
-	TtDbRead
+	TtBaseRead
 )
 
 func NewToken(tt TokenType) TokenCompleter {
@@ -130,8 +130,8 @@ func NewToken(tt TokenType) TokenCompleter {
 		return &BlockInfoToken{baseToken[model.BlockInfo]{complete: make(chan struct{})}}
 	case TtClockRead:
 		return &ClockReadToken{baseToken[time.Time]{complete: make(chan struct{})}}
-	case TtDbRead:
-		return &DbReadToken{baseToken[[]byte]{complete: make(chan struct{})}}
+	case TtBaseRead:
+		return &BaseReadToken{baseToken[[]byte]{complete: make(chan struct{})}}
 	default:
 		return nil
 	}
@@ -298,7 +298,7 @@ type ClockReadToken struct {
 	baseToken[time.Time]
 }
 
-type DbReadToken struct {
+type BaseReadToken struct {
 	baseToken[[]byte]
 }
 

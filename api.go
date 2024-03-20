@@ -37,17 +37,17 @@ type Client interface {
 	WriteRaw(address string, data []byte) *SimpleToken
 	// WriteRawBatch write batch raw bytes to plc addresses
 	WriteRawBatch(addresses []string, data [][]byte) *SimpleToken
-	// DBRead data block read
+	// BaseRead block read
 	// Support exceeds the maximum pdu length.
 	// If the maximum pdu length is exceeded, it will be divided into multiple requests
 	// And the aggregated results will be returned after the last request
-	DBRead(dbNumber int, start int, size int) *DbReadToken
-	// DBWrite data block write
+	BaseRead(area common.AreaType, dbNumber int, byteAddr int, bitAddr int, size int) *BaseReadToken
+	// BaseWrite block write
 	// Support exceeds the maximum pdu length.
 	// If the maximum pdu length is exceeded, it will be divided into multiple requests
-	DBWrite(dbNumber int, start int, data []byte) *SimpleToken
+	BaseWrite(area common.AreaType, dbNumber int, byteAddr int, bitAddr int, data []byte) *SimpleToken
 	// DBGet get all data of the data block
-	DBGet(dbNumber int) *DbReadToken
+	DBGet(dbNumber int) *BaseReadToken
 	// DBFill fill the data block to the specified byte
 	DBFill(dbNumber int, fillByte byte) *SimpleToken
 

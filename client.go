@@ -174,9 +174,9 @@ func (c *client) WriteRawBatch(addresses []string, data [][]byte) *SimpleToken {
 	return c.write(requests, dataItems)
 }
 
-func (c *client) DBRead(dbNumber int, start int, size int) *DbReadToken {
-	token := NewToken(TtDbRead).(*DbReadToken)
-	item := model.NewStandardRequestItem(common.AtDataBlocks, dbNumber, common.PvtByte, start, 0, size)
+func (c *client) BaseRead(area common.AreaType, dbNumber int, byteAddr int, bitAddr int, size int) *BaseReadToken {
+	token := NewToken(TtBaseRead).(*BaseReadToken)
+	item := model.NewStandardRequestItem(area, dbNumber, common.PvtByte, byteAddr, bitAddr, size)
 	c.read([]common.RequestItem{item}).Async(func(v []*model.DataItem, err error) {
 		if err != nil {
 			token.setError(err)
@@ -188,8 +188,8 @@ func (c *client) DBRead(dbNumber int, start int, size int) *DbReadToken {
 	return token
 }
 
-func (c *client) DBWrite(dbNumber int, start int, data []byte) *SimpleToken {
-	item := model.NewStandardRequestItem(common.AtDataBlocks, dbNumber, common.PvtByte, start, 0, len(data))
+func (c *client) BaseWrite(area common.AreaType, dbNumber int, byteAddr int, bitAddr int, data []byte) *SimpleToken {
+	item := model.NewStandardRequestItem(area, dbNumber, common.PvtByte, byteAddr, bitAddr, len(data))
 	dataItem := model.NewReqDataItem(data, item.VariableType.DataVariableType())
 	return c.write([]common.RequestItem{item}, []common.ResponseItem{dataItem})
 }
@@ -575,7 +575,7 @@ func (c *client) DBFill(dbNumber int, fillByte byte) *SimpleToken {
 		for i := 0; i < v.MC7CodeLength; i++ {
 			data[i] = fillByte
 		}
-		c.DBWrite(dbNumber, 0, data).Async(func(err error) {
+		c.BaseWrite(common.AtDataBlocks, dbNumber, 0, 0, data).Async(func(err error) {
 			if err != nil {
 				token.setError(err)
 				return
@@ -586,14 +586,14 @@ func (c *client) DBFill(dbNumber int, fillByte byte) *SimpleToken {
 	return token
 }
 
-func (c *client) DBGet(dbNumber int) *DbReadToken {
-	token := NewToken(TtDbRead).(*DbReadToken)
+func (c *client) DBGet(dbNumber int) *BaseReadToken {
+	token := NewToken(TtBaseRead).(*BaseReadToken)
 	c.BlockInfo(common.DtDb, dbNumber).Async(func(v model.BlockInfo, err error) {
 		if err != nil {
 			token.setError(err)
 			return
 		}
-		c.DBRead(dbNumber, 0, v.MC7CodeLength).Async(func(v []byte, err error) {
+		c.BaseRead(common.AtDataBlocks, dbNumber, 0, 0, v.MC7CodeLength).Async(func(v []byte, err error) {
 			if err != nil {
 				token.setError(err)
 				return
