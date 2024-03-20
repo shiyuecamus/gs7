@@ -139,7 +139,7 @@ func (c *client) ReadRaw(address string) *SingleRawReadToken {
 
 func (c *client) ReadBatchRaw(addresses []string) *BatchRawReadToken {
 	token := NewToken(TtBatchRawRead).(*BatchRawReadToken)
-	items, _, err := c.parseReadRequestItems(addresses)
+	items, ots, err := c.parseReadRequestItems(addresses)
 	if err != nil {
 		token.setError(err)
 		return token
@@ -153,7 +153,7 @@ func (c *client) ReadBatchRaw(addresses []string) *BatchRawReadToken {
 		for i, dataItem := range v {
 			res = append(res, RawInfo{
 				Value:   dataItem.Data,
-				Type:    items[i].(*core.StandardRequestItem).VariableType,
+				Type:    ots[i],
 				plcType: c.plcType,
 			})
 		}
