@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/shiyuecamus/gs7/common"
+	"github.com/shiyuecamus/gs7/core"
 	"github.com/shiyuecamus/gs7/logging"
-	"github.com/shiyuecamus/gs7/model"
 	"github.com/shiyuecamus/gs7/util"
 	"math"
 	"net"
@@ -103,21 +103,20 @@ func (c *client) ReadParsed(address string) *SingleParsedReadToken {
 
 func (c *client) ReadBatchParsed(addresses []string) *BatchParsedReadToken {
 	token := NewToken(TtBatchParsedRead).(*BatchParsedReadToken)
-
-	items, infos, err := c.parseReadRequestItems(addresses)
-	if err != nil {
-		token.setError(err)
-		return token
-	}
-	c.read(items).Async(func(v []*model.DataItem, err error) {
+	c.ReadBatchRaw(addresses).Async(func(v []RawInfo, err error) {
 		if err != nil {
 			token.setError(err)
 			return
 		}
-		res, err := c.parseReadDataItemValues(v, infos)
-		if err != nil {
-			token.setError(err)
-			return
+		res := make([]any, 0)
+		var value any
+		for _, info := range v {
+			value, err = info.Parse()
+			if err != nil {
+				token.setError(err)
+				return
+			}
+			res = append(res, value)
 		}
 		token.v = res
 		token.flowComplete()
@@ -127,7 +126,7 @@ func (c *client) ReadBatchParsed(addresses []string) *BatchParsedReadToken {
 
 func (c *client) ReadRaw(address string) *SingleRawReadToken {
 	token := NewToken(TtSingleRawRead).(*SingleRawReadToken)
-	c.ReadBatchRaw([]string{address}).Async(func(v [][]byte, err error) {
+	c.ReadBatchRaw([]string{address}).Async(func(v []RawInfo, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -145,14 +144,18 @@ func (c *client) ReadBatchRaw(addresses []string) *BatchRawReadToken {
 		token.setError(err)
 		return token
 	}
-	c.read(items).Async(func(v []*model.DataItem, err error) {
+	c.read(items).Async(func(v []*core.DataItem, err error) {
 		if err != nil {
 			token.setError(err)
 			return
 		}
-		res := make([][]byte, 0, len(v))
-		for _, dataItem := range v {
-			res = append(res, dataItem.Data)
+		res := make([]RawInfo, 0, len(v))
+		for i, dataItem := range v {
+			res = append(res, RawInfo{
+				Value:   dataItem.Data,
+				Type:    items[i].(*core.StandardRequestItem).VariableType,
+				plcType: c.plcType,
+			})
 		}
 		token.v = res
 		token.flowComplete()
@@ -176,8 +179,8 @@ func (c *client) WriteRawBatch(addresses []string, data [][]byte) *SimpleToken {
 
 func (c *client) BaseRead(area common.AreaType, dbNumber int, byteAddr int, bitAddr int, size int) *BaseReadToken {
 	token := NewToken(TtBaseRead).(*BaseReadToken)
-	item := model.NewStandardRequestItem(area, dbNumber, common.PvtByte, byteAddr, bitAddr, size)
-	c.read([]common.RequestItem{item}).Async(func(v []*model.DataItem, err error) {
+	item := core.NewStandardRequestItem(area, dbNumber, common.PvtByte, byteAddr, bitAddr, size)
+	c.read([]common.RequestItem{item}).Async(func(v []*core.DataItem, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -189,14 +192,14 @@ func (c *client) BaseRead(area common.AreaType, dbNumber int, byteAddr int, bitA
 }
 
 func (c *client) BaseWrite(area common.AreaType, dbNumber int, byteAddr int, bitAddr int, data []byte) *SimpleToken {
-	item := model.NewStandardRequestItem(area, dbNumber, common.PvtByte, byteAddr, bitAddr, len(data))
-	dataItem := model.NewReqDataItem(data, item.VariableType.DataVariableType())
+	item := core.NewStandardRequestItem(area, dbNumber, common.PvtByte, byteAddr, bitAddr, len(data))
+	dataItem := core.NewReqDataItem(data, item.VariableType.DataVariableType())
 	return c.write([]common.RequestItem{item}, []common.ResponseItem{dataItem})
 }
 
 func (c *client) HotRestart() *SimpleToken {
 	token := NewToken(TtSimple).(*SimpleToken)
-	c.send(model.NewHotRestart(c.GeneratePduNumber())).Async(func(_ *model.PDU, err error) {
+	c.send(core.NewHotRestart(c.GeneratePduNumber())).Async(func(_ *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -208,7 +211,7 @@ func (c *client) HotRestart() *SimpleToken {
 
 func (c *client) ColdRestart() *SimpleToken {
 	token := NewToken(TtSimple).(*SimpleToken)
-	c.send(model.NewColdRestart(c.GeneratePduNumber())).Async(func(_ *model.PDU, err error) {
+	c.send(core.NewColdRestart(c.GeneratePduNumber())).Async(func(_ *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -220,7 +223,7 @@ func (c *client) ColdRestart() *SimpleToken {
 
 func (c *client) StopPlc() *SimpleToken {
 	token := NewToken(TtSimple).(*SimpleToken)
-	c.send(model.NewStopPlc(c.GeneratePduNumber())).Async(func(_ *model.PDU, err error) {
+	c.send(core.NewStopPlc(c.GeneratePduNumber())).Async(func(_ *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -232,7 +235,7 @@ func (c *client) StopPlc() *SimpleToken {
 
 func (c *client) CopyRamToRom() *SimpleToken {
 	token := NewToken(TtSimple).(*SimpleToken)
-	c.send(model.NewCopyRamToRom(c.GeneratePduNumber())).Async(func(_ *model.PDU, err error) {
+	c.send(core.NewCopyRamToRom(c.GeneratePduNumber())).Async(func(_ *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -244,7 +247,7 @@ func (c *client) CopyRamToRom() *SimpleToken {
 
 func (c *client) Compress() *SimpleToken {
 	token := NewToken(TtSimple).(*SimpleToken)
-	c.send(model.NewCompress(c.GeneratePduNumber())).Async(func(_ *model.PDU, err error) {
+	c.send(core.NewCompress(c.GeneratePduNumber())).Async(func(_ *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -256,7 +259,7 @@ func (c *client) Compress() *SimpleToken {
 
 func (c *client) InsertFile(bt common.BlockType, blockNumber int) *SimpleToken {
 	token := NewToken(TtSimple).(*SimpleToken)
-	c.send(model.NewInsert(bt, common.DfsP, blockNumber, c.GeneratePduNumber())).Async(func(_ *model.PDU, err error) {
+	c.send(core.NewInsert(bt, common.DfsP, blockNumber, c.GeneratePduNumber())).Async(func(_ *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -268,33 +271,33 @@ func (c *client) InsertFile(bt common.BlockType, blockNumber int) *SimpleToken {
 
 func (c *client) UploadFile(bt common.BlockType, blockNumber int) *UploadToken {
 	token := NewToken(TtUpload).(*UploadToken)
-	c.send(model.NewStartUpload(bt, common.DfsA, blockNumber, c.GeneratePduNumber())).Async(func(v *model.PDU, err error) {
+	c.send(core.NewStartUpload(bt, common.DfsA, blockNumber, c.GeneratePduNumber())).Async(func(v *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
 		}
-		parameter := v.GetParameter().(*model.StartUploadAckParameter)
+		parameter := v.GetParameter().(*core.StartUploadAckParameter)
 		res := make([]byte, 0, parameter.BlockLength)
-		ackParameter := model.NewUploadAckParameter()
+		ackParameter := core.NewUploadAckParameter()
 		ackParameter.MoreDataFollowing = true
-		var uploadAck *model.PDU
+		var uploadAck *core.PDU
 		for ackParameter.MoreDataFollowing {
-			uploadToken := c.send(model.NewUpload(parameter.Id, c.GeneratePduNumber()))
+			uploadToken := c.send(core.NewUpload(parameter.Id, c.GeneratePduNumber()))
 			uploadAck, err = uploadToken.Wait()
 			if err != nil {
 				token.setError(err)
 				return
 			}
-			ackParameter = uploadAck.GetParameter().(*model.UploadAckParameter)
+			ackParameter = uploadAck.GetParameter().(*core.UploadAckParameter)
 			if ackParameter.ErrorStatus {
 				err = common.ErrorWithCode(common.ErrCliUploadFailed)
 				token.setError(err)
 				return
 			}
-			datum := uploadAck.GetDatum().(*model.UpDownloadDatum)
+			datum := uploadAck.GetDatum().(*core.UpDownloadDatum)
 			res = append(res, datum.Data...)
 		}
-		endToken := c.send(model.NewEndUpload(parameter.Id, c.GeneratePduNumber()))
+		endToken := c.send(core.NewEndUpload(parameter.Id, c.GeneratePduNumber()))
 		_, err = endToken.Wait()
 		if err != nil {
 			token.setError(err)
@@ -310,7 +313,7 @@ func (c *client) UploadFile(bt common.BlockType, blockNumber int) *UploadToken {
 func (c *client) DownloadFile(bytes []byte, bt common.BlockType, bn int, mC7CodeLength int) *SimpleToken {
 	token := NewToken(TtSimple).(*SimpleToken)
 	total := len(bytes)
-	c.send(model.NewStartDownload(bt, common.DfsP, bn, total, mC7CodeLength, c.GeneratePduNumber())).Async(func(v *model.PDU, err error) {
+	c.send(core.NewStartDownload(bt, common.DfsP, bn, total, mC7CodeLength, c.GeneratePduNumber())).Async(func(v *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -319,7 +322,7 @@ func (c *client) DownloadFile(bytes []byte, bt common.BlockType, bn int, mC7Code
 		for sent < total {
 			moreDataFollowing := total-sent > c.pduLength-32
 			length := int(math.Min(float64(total-sent), float64(c.pduLength-32)))
-			downloadToken := c.send(model.NewDownload(bt, common.DfsP, bn, moreDataFollowing, bytes[sent:sent+length], c.GeneratePduNumber()))
+			downloadToken := c.send(core.NewDownload(bt, common.DfsP, bn, moreDataFollowing, bytes[sent:sent+length], c.GeneratePduNumber()))
 			_, err = downloadToken.Wait()
 			if err != nil {
 				token.setError(err)
@@ -327,7 +330,7 @@ func (c *client) DownloadFile(bytes []byte, bt common.BlockType, bn int, mC7Code
 			}
 			sent += length
 		}
-		endToken := c.send(model.NewEndDownload(bt, common.DfsP, bn, c.GeneratePduNumber()))
+		endToken := c.send(core.NewEndDownload(bt, common.DfsP, bn, c.GeneratePduNumber()))
 		_, err = endToken.Wait()
 		if err != nil {
 			token.setError(err)
@@ -347,7 +350,7 @@ func (c *client) GetSzlIds() *SzlIdsToken {
 			token.setError(err)
 			return
 		}
-		datum := pdu.GetDatum().(*model.ReadSzlAckDatum)
+		datum := pdu.GetDatum().(*core.ReadSzlAckDatum)
 		if datum.PartLength != 2 {
 			token.setError(common.ErrorWithCode(common.ErrCliResponseInvalid))
 			return
@@ -371,14 +374,14 @@ func (c *client) GetCatalog() *CatalogToken {
 			token.setError(err)
 			return
 		}
-		datum := pdu.GetDatum().(*model.ReadSzlAckDatum)
+		datum := pdu.GetDatum().(*core.ReadSzlAckDatum)
 		if datum.PartCount < 3 || datum.PartLength != 28 {
 			token.setError(common.ErrorWithCode(common.ErrCliResponseInvalid))
 			return
 		}
 		start := 2
 		end := datum.PartLength - 6
-		token.v = model.Catalog{
+		token.v = core.Catalog{
 			OrderCode: strings.TrimSpace(string(datum.Parts[0][start:end])),
 			Version: fmt.Sprintf("V%d.%d.%d",
 				datum.Parts[2][25],
@@ -399,12 +402,12 @@ func (c *client) GetPlcStatus() *PlcStatusToken {
 			token.setError(err)
 			return
 		}
-		datum := pdu.GetDatum().(*model.ReadSzlAckDatum)
+		datum := pdu.GetDatum().(*core.ReadSzlAckDatum)
 		if datum.PartCount < 0 || len(datum.Parts[0]) < 4 {
 			token.setError(common.ErrorWithCode(common.ErrCliResponseInvalid))
 			return
 		}
-		token.v = model.PlcStatus(datum.Parts[0][3])
+		token.v = core.PlcStatus(datum.Parts[0][3])
 		token.flowComplete()
 	}()
 	return token
@@ -419,12 +422,12 @@ func (c *client) GetUnitInfo() *UnitInfoToken {
 			token.setError(err)
 			return
 		}
-		datum := pdu.GetDatum().(*model.ReadSzlAckDatum)
+		datum := pdu.GetDatum().(*core.ReadSzlAckDatum)
 		if datum.PartCount < 6 || datum.PartLength != 34 {
 			token.setError(common.ErrorWithCode(common.ErrCliResponseInvalid))
 			return
 		}
-		token.v = model.UnitInfo{
+		token.v = core.UnitInfo{
 			ASName:         strings.TrimSpace(string(datum.Parts[0][2:26])),
 			ModuleName:     strings.TrimSpace(string(datum.Parts[1][2:26])),
 			Copyright:      strings.TrimSpace(string(datum.Parts[3][2:28])),
@@ -445,12 +448,12 @@ func (c *client) GetCommunicationInfo() *CommunicationInfoToken {
 			token.setError(err)
 			return
 		}
-		datum := pdu.GetDatum().(*model.ReadSzlAckDatum)
+		datum := pdu.GetDatum().(*core.ReadSzlAckDatum)
 		if datum.PartCount < 0 || datum.PartLength != 34 {
 			token.setError(common.ErrorWithCode(common.ErrCliResponseInvalid))
 			return
 		}
-		token.v = model.CommunicationInfo{
+		token.v = core.CommunicationInfo{
 			MaxPduLength:   int(binary.BigEndian.Uint16(datum.Parts[0][2:])),
 			MaxConnections: int(binary.BigEndian.Uint16(datum.Parts[0][4:])),
 			MaxMpiRate:     int(binary.BigEndian.Uint16(datum.Parts[0][6:])),
@@ -470,12 +473,12 @@ func (c *client) GetProtectionInfo() *ProtectionInfoToken {
 			token.setError(err)
 			return
 		}
-		datum := pdu.GetDatum().(*model.ReadSzlAckDatum)
+		datum := pdu.GetDatum().(*core.ReadSzlAckDatum)
 		if datum.PartCount < 0 {
 			token.setError(common.ErrorWithCode(common.ErrCliResponseInvalid))
 			return
 		}
-		token.v = model.ProtectionInfo{
+		token.v = core.ProtectionInfo{
 			Level:           binary.BigEndian.Uint16(datum.Parts[0][2:]),
 			ParameterLevel:  common.ParameterProtectionLevel(binary.BigEndian.Uint16(datum.Parts[0][4:])),
 			CpuLevel:        common.CpuProtectionLevel(binary.BigEndian.Uint16(datum.Parts[0][6:])),
@@ -489,12 +492,12 @@ func (c *client) GetProtectionInfo() *ProtectionInfoToken {
 
 func (c *client) ReadSzl(szlId uint16, szlIndex uint16) *PduToken {
 	t := NewToken(TtPdu).(*PduToken)
-	c.send(model.NewReadSzl(szlId, szlIndex, c.GeneratePduNumber())).Async(func(v *model.PDU, err error) {
+	c.send(core.NewReadSzl(szlId, szlIndex, c.GeneratePduNumber())).Async(func(v *core.PDU, err error) {
 		if err != nil {
 			t.setError(err)
 			return
 		}
-		if _, ok := v.GetDatum().(*model.ReadSzlAckDatum); !ok {
+		if _, ok := v.GetDatum().(*core.ReadSzlAckDatum); !ok {
 			t.setError(common.ErrorWithCode(common.ErrCliResponseInvalid))
 			return
 		}
@@ -506,12 +509,12 @@ func (c *client) ReadSzl(szlId uint16, szlIndex uint16) *PduToken {
 
 func (c *client) BlockList() *BlockListToken {
 	token := NewToken(TtBlockList).(*BlockListToken)
-	c.send(model.NewBlockList(c.GeneratePduNumber())).Async(func(v *model.PDU, err error) {
+	c.send(core.NewBlockList(c.GeneratePduNumber())).Async(func(v *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
 		}
-		token.v = v.GetDatum().(*model.BlockListAckDatum).Blocks
+		token.v = v.GetDatum().(*core.BlockListAckDatum).Blocks
 		token.flowComplete()
 	})
 	return token
@@ -519,12 +522,12 @@ func (c *client) BlockList() *BlockListToken {
 
 func (c *client) BlockListType(bt common.BlockType) *BlockListTypeToken {
 	token := NewToken(TtBlockListType).(*BlockListTypeToken)
-	c.send(model.NewBlockListType(bt, c.GeneratePduNumber())).Async(func(v *model.PDU, err error) {
+	c.send(core.NewBlockListType(bt, c.GeneratePduNumber())).Async(func(v *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
 		}
-		token.v = v.GetDatum().(*model.BlockListTypeAckDatum).Types
+		token.v = v.GetDatum().(*core.BlockListTypeAckDatum).Types
 		token.flowComplete()
 	})
 	return token
@@ -532,17 +535,17 @@ func (c *client) BlockListType(bt common.BlockType) *BlockListTypeToken {
 
 func (c *client) BlockInfo(bt common.BlockType, bn int) *BlockInfoToken {
 	token := NewToken(TtBlockInfo).(*BlockInfoToken)
-	c.send(model.NewBlockInfo(bt, common.DfsA, bn, c.GeneratePduNumber())).Async(func(v *model.PDU, err error) {
+	c.send(core.NewBlockInfo(bt, common.DfsA, bn, c.GeneratePduNumber())).Async(func(v *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
 		}
-		datum := v.GetDatum().(*model.BlockInfoAckDatum)
+		datum := v.GetDatum().(*core.BlockInfoAckDatum)
 		codeDate := (int64(binary.BigEndian.Uint32(datum.CodeTimestamp[:4])) << 16) +
 			int64(binary.BigEndian.Uint16(datum.CodeTimestamp[4:]))
 		interfaceDate := (int64(binary.BigEndian.Uint32(datum.InterfaceTimestamp[:4])) << 16) +
 			int64(binary.BigEndian.Uint16(datum.InterfaceTimestamp[4:]))
-		token.v = model.BlockInfo{
+		token.v = core.BlockInfo{
 			BlockType:        int(datum.BlockType),
 			BlockNumber:      int(datum.BlockNumber),
 			Language:         int(datum.Language),
@@ -566,7 +569,7 @@ func (c *client) BlockInfo(bt common.BlockType, bn int) *BlockInfoToken {
 
 func (c *client) DBFill(dbNumber int, fillByte byte) *SimpleToken {
 	token := NewToken(TtSimple).(*SimpleToken)
-	c.BlockInfo(common.DtDb, dbNumber).Async(func(v model.BlockInfo, err error) {
+	c.BlockInfo(common.DtDb, dbNumber).Async(func(v core.BlockInfo, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -588,7 +591,7 @@ func (c *client) DBFill(dbNumber int, fillByte byte) *SimpleToken {
 
 func (c *client) DBGet(dbNumber int) *BaseReadToken {
 	token := NewToken(TtBaseRead).(*BaseReadToken)
-	c.BlockInfo(common.DtDb, dbNumber).Async(func(v model.BlockInfo, err error) {
+	c.BlockInfo(common.DtDb, dbNumber).Async(func(v core.BlockInfo, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -607,12 +610,12 @@ func (c *client) DBGet(dbNumber int) *BaseReadToken {
 
 func (c *client) ClockRead() *ClockReadToken {
 	token := NewToken(TtClockRead).(*ClockReadToken)
-	c.send(model.NewClockRead(c.GeneratePduNumber())).Async(func(v *model.PDU, err error) {
+	c.send(core.NewClockRead(c.GeneratePduNumber())).Async(func(v *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
 		}
-		datum := v.GetDatum().(*model.ClockAckDatum)
+		datum := v.GetDatum().(*core.ClockAckDatum)
 		year, _ := strconv.Atoi(hex.EncodeToString([]byte{datum.Year1, datum.Year2}))
 		month, _ := strconv.Atoi(hex.EncodeToString([]byte{datum.Month}))
 		day, _ := strconv.Atoi(hex.EncodeToString([]byte{datum.Day}))
@@ -634,7 +637,7 @@ func (c *client) ClockRead() *ClockReadToken {
 
 func (c *client) ClockSet(t time.Time) *SimpleToken {
 	token := NewToken(TtSimple).(*SimpleToken)
-	c.send(model.NewClockSet(t, c.GeneratePduNumber())).Async(func(_ *model.PDU, err error) {
+	c.send(core.NewClockSet(t, c.GeneratePduNumber())).Async(func(_ *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -650,7 +653,7 @@ func (c *client) SetPassword(pwd string) *SimpleToken {
 		token.setError(common.ErrorWithCode(common.ErrPasswordLengthInvalid, 8))
 		return token
 	}
-	c.send(model.NewSetPassword(pwd, c.GeneratePduNumber())).Async(func(_ *model.PDU, err error) {
+	c.send(core.NewSetPassword(pwd, c.GeneratePduNumber())).Async(func(_ *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -662,7 +665,7 @@ func (c *client) SetPassword(pwd string) *SimpleToken {
 
 func (c *client) ClearPassword() *SimpleToken {
 	token := NewToken(TtSimple).(*SimpleToken)
-	c.send(model.NewClearPassword(c.GeneratePduNumber())).Async(func(_ *model.PDU, err error) {
+	c.send(core.NewClearPassword(c.GeneratePduNumber())).Async(func(_ *core.PDU, err error) {
 		if err != nil {
 			token.setError(err)
 			return
@@ -694,7 +697,7 @@ func (c *client) autoConnect(endpoint string) (conn net.Conn, err error) {
 	return
 }
 
-func (c *client) isoConnect() *model.PDU {
+func (c *client) isoConnect() *core.PDU {
 	var local uint16 = 0x0100
 	var remote uint16 = 0x0300
 	switch c.plcType {
@@ -714,7 +717,7 @@ func (c *client) isoConnect() *model.PDU {
 		remote = 0x0D04
 		break
 	}
-	return model.NewConnectRequest(local, remote)
+	return core.NewConnectRequest(local, remote)
 }
 
 func (c *client) validate(tpkt common.TPKT) (err error) {
@@ -724,12 +727,12 @@ func (c *client) validate(tpkt common.TPKT) (err error) {
 	return
 }
 
-func checkReqAck(req *model.PDU, ack *model.PDU) (err error) {
+func checkReqAck(req *core.PDU, ack *core.PDU) (err error) {
 	if ack.GetHeader() == nil {
 		return nil
 	}
 
-	if ackHeader, ok := ack.GetHeader().(*model.AckHeader); ok && ackHeader.ErrorClass != 0x00 {
+	if ackHeader, ok := ack.GetHeader().(*core.AckHeader); ok && ackHeader.ErrorClass != 0x00 {
 		err = common.ErrorWithCode(common.ErrCliResponseExceptional,
 			common.ErrorClassDescOrDefault(ackHeader.ErrorClass, "UnKnown"),
 			common.ErrorCodeDescOrDefault(ackHeader.ErrorCode, "UnKnown"))
@@ -741,7 +744,7 @@ func checkReqAck(req *model.PDU, ack *model.PDU) (err error) {
 		return
 	}
 
-	if parameter, ok := ack.GetParameter().(*model.UserdataAckParameter); ok && parameter.ErrorClass != 0x00 {
+	if parameter, ok := ack.GetParameter().(*core.UserdataAckParameter); ok && parameter.ErrorClass != 0x00 {
 		err = common.ErrorWithCode(common.ErrCliResponseExceptional,
 			common.ErrorClassDescOrDefault(parameter.ErrorClass, "UnKnown"),
 			common.ErrorCodeDescOrDefault(parameter.ErrorCode, "UnKnown"))
@@ -752,9 +755,9 @@ func checkReqAck(req *model.PDU, ack *model.PDU) (err error) {
 		return
 	}
 
-	if datum, ok := ack.GetDatum().(*model.ReadWriteDatum); !ok {
+	if datum, ok := ack.GetDatum().(*core.ReadWriteDatum); !ok {
 		return
-	} else if readWriteParameter, ok := req.GetParameter().(*model.ReadWriteParameter); ok {
+	} else if readWriteParameter, ok := req.GetParameter().(*core.ReadWriteParameter); ok {
 		if len(datum.ReturnItems) != int(readWriteParameter.ItemCount) {
 			err = common.ErrorWithCode(common.ErrCliResponseLengthMismatch)
 			return
@@ -781,11 +784,11 @@ func (c *client) read(requests []common.RequestItem) *ReadToken {
 
 	go func() {
 		rawNumbers := make([]uint16, 0, len(requests))
-		result := make([]*model.DataItem, 0, len(requests))
+		result := make([]*core.DataItem, 0, len(requests))
 		for _, request := range requests {
-			request := request.(*model.StandardRequestItem)
+			request := request.(*core.StandardRequestItem)
 			rawNumbers = append(rawNumbers, request.Count)
-			result = append(result, model.NewReqDataItem(make([]byte, int(request.VariableType.Size()*request.Count)), request.VariableType.DataVariableType()))
+			result = append(result, core.NewReqDataItem(make([]byte, int(request.VariableType.Size()*request.Count)), request.VariableType.DataVariableType()))
 		}
 
 		groups := util.ReadRecombination(rawNumbers, c.pduLength-14, 5, 12)
@@ -793,22 +796,22 @@ func (c *client) read(requests []common.RequestItem) *ReadToken {
 			newRequestItems := make([]common.RequestItem, 0)
 			for i := 0; i < len(group.Items); i++ {
 				item := group.Items[i]
-				requestItem := *(requests[item.Index].(*model.StandardRequestItem))
+				requestItem := *(requests[item.Index].(*core.StandardRequestItem))
 				requestItem.Count = uint16(item.RipeSize)
 				requestItem.ByteAddress += item.SplitOffset
 				newRequestItems = append(newRequestItems, &requestItem)
 			}
-			request := model.NewReadRequest(newRequestItems, c.GeneratePduNumber())
+			request := core.NewReadRequest(newRequestItems, c.GeneratePduNumber())
 			pduToken := c.send(request)
 			ack, err := pduToken.Wait()
 			if err != nil {
 				token.setError(err)
 				return
 			}
-			datum := ack.GetDatum().(*model.ReadWriteDatum)
+			datum := ack.GetDatum().(*core.ReadWriteDatum)
 			for i := 0; i < len(group.Items); i++ {
 				item := group.Items[i]
-				copy(result[item.Index].Data[item.SplitOffset:], datum.ReturnItems[i].(*model.DataItem).Data)
+				copy(result[item.Index].Data[item.SplitOffset:], datum.ReturnItems[i].(*core.DataItem).Data)
 			}
 		}
 		token.v = result
@@ -832,7 +835,7 @@ func (c *client) write(requests []common.RequestItem, dataItems []common.Respons
 	go func() {
 		rawNumbers := make([]uint16, 0, len(requests))
 		for _, request := range requests {
-			request := request.(*model.StandardRequestItem)
+			request := request.(*core.StandardRequestItem)
 			rawNumbers = append(rawNumbers, request.Count)
 		}
 
@@ -843,18 +846,18 @@ func (c *client) write(requests []common.RequestItem, dataItems []common.Respons
 			newDataItems := make([]common.ResponseItem, 0)
 			for i := 0; i < len(items); i++ {
 				item := items[i]
-				requestItem := *(requests[item.Index].(*model.StandardRequestItem))
+				requestItem := *(requests[item.Index].(*core.StandardRequestItem))
 				requestItem.Count = uint16(item.RipeSize)
 				requestItem.ByteAddress += item.SplitOffset
 				newRequestItems = append(newRequestItems, &requestItem)
 
-				dataItem := *(dataItems[item.Index].(*model.DataItem))
+				dataItem := *(dataItems[item.Index].(*core.DataItem))
 				dataItem.Count = uint16(item.RipeSize)
 				dataItem.Data = dataItem.Data[item.SplitOffset : item.SplitOffset+item.RipeSize]
 				newDataItems = append(newDataItems, &dataItem)
 			}
 
-			request := model.NewWriteRequest(newRequestItems, newDataItems, c.GeneratePduNumber())
+			request := core.NewWriteRequest(newRequestItems, newDataItems, c.GeneratePduNumber())
 			pduToken := c.send(request)
 			_, err := pduToken.Wait()
 			if err != nil {
@@ -867,7 +870,7 @@ func (c *client) write(requests []common.RequestItem, dataItems []common.Respons
 	return token
 }
 
-func (c *client) send(request *model.PDU) *PduToken {
+func (c *client) send(request *core.PDU) *PduToken {
 	p := NewToken(TtPdu).(*PduToken)
 	if c.GetConn() == nil {
 		p.setError(common.ErrorWithCode(common.ErrCliConnectionNil, c.host, c.port))
@@ -877,7 +880,7 @@ func (c *client) send(request *model.PDU) *PduToken {
 	status := c.status.ConnectionStatus()
 	if !(status == connected ||
 		((status == connecting || status == reconnecting) && request.GetCOTP().GetPduType() == common.PtConnectRequest)) {
-		_, ok := request.GetParameter().(*model.SetupComParameter)
+		_, ok := request.GetParameter().(*core.SetupComParameter)
 		if (status != connecting && status != reconnecting) && !ok {
 			p.setError(common.ErrorWithCode(common.ErrCliConnectionInactive, c.host, c.port))
 			return p
@@ -893,7 +896,7 @@ func (c *client) send(request *model.PDU) *PduToken {
 		case common.PtDisconnectRequest:
 			ctx = &ConnectRequestContext{
 				Request:  request,
-				Response: make(chan *model.PDU),
+				Response: make(chan *core.PDU),
 				Error:    make(chan error),
 			}
 			err = c.tcpClient.handleDisconnectRequestContext(ctx)
@@ -904,7 +907,7 @@ func (c *client) send(request *model.PDU) *PduToken {
 		case common.PtConnectRequest:
 			ctx = &ConnectRequestContext{
 				Request:  request,
-				Response: make(chan *model.PDU),
+				Response: make(chan *core.PDU),
 				Error:    make(chan error),
 			}
 			err = c.tcpClient.handleConnectRequestContext(ctx)
@@ -916,7 +919,7 @@ func (c *client) send(request *model.PDU) *PduToken {
 			ctx = &StandardRequestContext{
 				RequestId: request.GetHeader().GetPduReference(),
 				Request:   request,
-				Response:  make(chan *model.PDU),
+				Response:  make(chan *core.PDU),
 				Error:     make(chan error),
 			}
 			err = c.tcpClient.handleRequestContext(ctx)
@@ -987,8 +990,8 @@ func (c *client) Connect() *ConnectToken {
 			c.disconnectedWithError(common.ErrorWithCode(common.ErrTcpConnect, err))
 			return
 		}
-		var ack *model.PDU
-		dtToken := c.send(model.NewConnectDt(uint16(c.pduLength), c.GeneratePduNumber()))
+		var ack *core.PDU
+		dtToken := c.send(core.NewConnectDt(uint16(c.pduLength), c.GeneratePduNumber()))
 		ack, err = dtToken.Wait()
 		if err != nil {
 			_ = fn(false)
@@ -1008,7 +1011,7 @@ func (c *client) Connect() *ConnectToken {
 			c.disconnectedWithError(common.ErrorWithCode(common.ErrCliResponseInvalid))
 			return
 		}
-		parameter, ok := ack.GetParameter().(*model.SetupComParameter)
+		parameter, ok := ack.GetParameter().(*core.SetupComParameter)
 		if !ok {
 			_ = fn(false)
 			t.setError(common.ErrorWithCode(common.ErrCliResponseInvalid))
@@ -1093,8 +1096,8 @@ func (c *client) reconnect(connectionUp connCompletedFn) {
 		_ = connectionUp(false)
 		return
 	}
-	var ack *model.PDU
-	dtToken := c.send(model.NewConnectDt(uint16(c.pduLength), c.GeneratePduNumber()))
+	var ack *core.PDU
+	dtToken := c.send(core.NewConnectDt(uint16(c.pduLength), c.GeneratePduNumber()))
 	ack, err = dtToken.Wait()
 	if err != nil {
 		_ = connectionUp(false)
@@ -1108,7 +1111,7 @@ func (c *client) reconnect(connectionUp connCompletedFn) {
 		_ = connectionUp(false)
 		return
 	}
-	parameter, ok := ack.GetParameter().(*model.SetupComParameter)
+	parameter, ok := ack.GetParameter().(*core.SetupComParameter)
 	if !ok {
 		_ = connectionUp(false)
 		return
@@ -1182,35 +1185,17 @@ func (c *client) parseReadRequestItems(addresses []string) (items []common.Reque
 	var item common.RequestItem
 	for i := 0; i < len(addresses); i++ {
 		address := addresses[i]
-		item, err = model.ParseAddress(address)
+		item, err = core.ParseAddress(address)
 		if err != nil {
 			return
 		}
-		ot := item.(*model.StandardRequestItem).VariableType
-		err = c.parseRequestItem(item.(*model.StandardRequestItem))
+		ot := item.(*core.StandardRequestItem).VariableType
+		err = c.parseRequestItem(item.(*core.StandardRequestItem))
 		if err != nil {
 			return
 		}
 		items = append(items, item)
 		ots = append(ots, ot)
-	}
-	return
-}
-
-func (c *client) parseReadDataItemValues(items []*model.DataItem, ots []common.ParamVariableType) (res []any, err error) {
-	if len(items) == 0 {
-		err = common.ErrorWithCode(common.ErrTcpResponseEmpty)
-		return
-	}
-	res = make([]any, 0)
-	var value any
-	for i, dataItem := range items {
-		ot := ots[i]
-		value, err = c.parseValueByVariableType(dataItem.Data, ot)
-		if err != nil {
-			return
-		}
-		res = append(res, value)
 	}
 	return
 }
@@ -1230,25 +1215,25 @@ func (c *client) parsesWriteRequestItems(addresses []string, data [][]byte) (req
 	dataItems = make([]common.ResponseItem, 0)
 	for i := 0; i < len(addresses); i++ {
 		address := addresses[i]
-		item, err = model.ParseAddress(address)
+		item, err = core.ParseAddress(address)
 		if err != nil {
 			return
 		}
-		if item.(*model.StandardRequestItem).VariableType == common.PvtString || item.(*model.StandardRequestItem).VariableType == common.PvtWString {
-			item.(*model.StandardRequestItem).Count = item.(*model.StandardRequestItem).Count * uint16(len(data[i]))
-			item.(*model.StandardRequestItem).VariableType = common.PvtByte
-		} else if item.(*model.StandardRequestItem).VariableType != common.PvtBit {
-			item.(*model.StandardRequestItem).Count = item.(*model.StandardRequestItem).Count * item.(*model.StandardRequestItem).VariableType.Size()
-			item.(*model.StandardRequestItem).VariableType = common.PvtByte
+		if item.(*core.StandardRequestItem).VariableType == common.PvtString || item.(*core.StandardRequestItem).VariableType == common.PvtWString {
+			item.(*core.StandardRequestItem).Count = item.(*core.StandardRequestItem).Count * uint16(len(data[i]))
+			item.(*core.StandardRequestItem).VariableType = common.PvtByte
+		} else if item.(*core.StandardRequestItem).VariableType != common.PvtBit {
+			item.(*core.StandardRequestItem).Count = item.(*core.StandardRequestItem).Count * item.(*core.StandardRequestItem).VariableType.Size()
+			item.(*core.StandardRequestItem).VariableType = common.PvtByte
 		}
-		dataItem := model.NewReqDataItem(data[i], item.(*model.StandardRequestItem).VariableType.DataVariableType())
+		dataItem := core.NewReqDataItem(data[i], item.(*core.StandardRequestItem).VariableType.DataVariableType())
 		requests = append(requests, item)
 		dataItems = append(dataItems, dataItem)
 	}
 	return
 }
 
-func (c *client) parseRequestItem(item *model.StandardRequestItem) (err error) {
+func (c *client) parseRequestItem(item *core.StandardRequestItem) (err error) {
 	switch item.VariableType {
 	case common.PvtString:
 		item.VariableType = common.PvtByte
@@ -1257,7 +1242,7 @@ func (c *client) parseRequestItem(item *model.StandardRequestItem) (err error) {
 			count = 1
 		}
 		item.Count = uint16(count)
-		var lRes []*model.DataItem
+		var lRes []*core.DataItem
 		token := c.read([]common.RequestItem{item})
 		lRes, err = token.Wait()
 		if err != nil {
@@ -1276,7 +1261,7 @@ func (c *client) parseRequestItem(item *model.StandardRequestItem) (err error) {
 			count = 2
 		}
 		item.Count = uint16(count)
-		var lRes []*model.DataItem
+		var lRes []*core.DataItem
 		token := c.read([]common.RequestItem{item})
 		lRes, err = token.Wait()
 		if err != nil {
@@ -1294,57 +1279,6 @@ func (c *client) parseRequestItem(item *model.StandardRequestItem) (err error) {
 		break
 	}
 	return
-}
-
-func (c *client) parseValueByVariableType(bs []byte, vt common.ParamVariableType) (res any, err error) {
-	if len(bs) == 0 {
-		return
-	}
-	if len(bs) != int(vt.Size()) && vt != common.PvtString && vt != common.PvtWString {
-		err = common.ErrorWithCode(common.ErrCliResponseInvalid)
-		return
-	}
-	switch vt {
-	case common.PvtString:
-		return StringFromBytes(bs, c.plcType)
-	case common.PvtWString:
-		return WStringFromBytes(bs, c.plcType)
-	case common.PvtBit:
-		return BitFromBytes(bs)
-	case common.PvtByte:
-		return ByteFromBytes(bs)
-	case common.PvtChar:
-		return CharFromBytes(bs)
-	case common.PvtInt:
-		return IntFromBytes(bs)
-	case common.PvtWord:
-		return WordFromBytes(bs)
-	case common.PvtDInt:
-		return DIntFromBytes(bs)
-	case common.PvtDWord:
-		return DWordFromBytes(bs)
-	case common.PvtReal:
-		return RealFromBytes(bs)
-	case common.PvtTime:
-		return TimeFromBytes(bs)
-	case common.PvtDate:
-		return DateFromBytes(bs)
-	case common.PvtTimeOfDay:
-		return TimeOfDayFromBytes(bs)
-	case common.PvtDateTime:
-		return DateTimeFromBytes(bs)
-	case common.PvtDTL:
-		return DateTimeLongFromBytes(bs)
-	case common.PvtS5Time:
-		return S5TimeFromBytes(bs)
-	case common.PvtCounter:
-		return CounterFromBytes(bs)
-	case common.PvtTimer:
-		return TimerFromBytes(bs)
-	default:
-		err = common.ErrorWithCode(common.ErrVariableTypeUnrecognized, vt)
-		return
-	}
 }
 
 func (c *client) GeneratePduNumber() uint16 {
@@ -1374,8 +1308,4 @@ func (c *client) GetConn() net.Conn {
 
 func (c *client) GetPduLength() int {
 	return c.pduLength
-}
-
-func (c *client) GetPlcType() common.PlcType {
-	return c.plcType
 }

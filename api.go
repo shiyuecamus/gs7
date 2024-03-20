@@ -22,8 +22,6 @@ type Client interface {
 	Disconnect()
 	// GetPduLength return plc max pdu length
 	GetPduLength() int
-	// GetPlcType return plc type
-	GetPlcType() common.PlcType
 
 	// ReadRaw read raw bytes from address
 	ReadRaw(address string) *SingleRawReadToken

@@ -4,20 +4,20 @@
 
 package gs7
 
-import "github.com/shiyuecamus/gs7/model"
+import "github.com/shiyuecamus/gs7/core"
 
 type RequestContext interface {
 	PutError(err error)
-	PutResponse(data *model.PDU)
-	GetResponse() (data *model.PDU, err error)
+	PutResponse(data *core.PDU)
+	GetResponse() (data *core.PDU, err error)
 	GetRequestId() uint16
-	GetRequest() *model.PDU
+	GetRequest() *core.PDU
 }
 
 type StandardRequestContext struct {
 	RequestId uint16
-	Request   *model.PDU
-	Response  chan *model.PDU
+	Request   *core.PDU
+	Response  chan *core.PDU
 	Error     chan error
 }
 
@@ -25,7 +25,7 @@ func (s *StandardRequestContext) PutError(err error) {
 	s.Error <- err
 }
 
-func (s *StandardRequestContext) PutResponse(data *model.PDU) {
+func (s *StandardRequestContext) PutResponse(data *core.PDU) {
 	s.Response <- data
 }
 
@@ -33,11 +33,11 @@ func (s *StandardRequestContext) GetRequestId() uint16 {
 	return s.RequestId
 }
 
-func (s *StandardRequestContext) GetRequest() *model.PDU {
+func (s *StandardRequestContext) GetRequest() *core.PDU {
 	return s.Request
 }
 
-func (s *StandardRequestContext) GetResponse() (res *model.PDU, err error) {
+func (s *StandardRequestContext) GetResponse() (res *core.PDU, err error) {
 	for {
 		select {
 		case res = <-s.Response:
@@ -49,8 +49,8 @@ func (s *StandardRequestContext) GetResponse() (res *model.PDU, err error) {
 }
 
 type ConnectRequestContext struct {
-	Request  *model.PDU
-	Response chan *model.PDU
+	Request  *core.PDU
+	Response chan *core.PDU
 	Error    chan error
 }
 
@@ -58,7 +58,7 @@ func (c *ConnectRequestContext) PutError(err error) {
 	c.Error <- err
 }
 
-func (c *ConnectRequestContext) PutResponse(data *model.PDU) {
+func (c *ConnectRequestContext) PutResponse(data *core.PDU) {
 	c.Response <- data
 }
 
@@ -66,11 +66,11 @@ func (c *ConnectRequestContext) GetRequestId() uint16 {
 	return 0
 }
 
-func (c *ConnectRequestContext) GetRequest() *model.PDU {
+func (c *ConnectRequestContext) GetRequest() *core.PDU {
 	return c.Request
 }
 
-func (c *ConnectRequestContext) GetResponse() (res *model.PDU, err error) {
+func (c *ConnectRequestContext) GetResponse() (res *core.PDU, err error) {
 	for {
 		select {
 		case res = <-c.Response:

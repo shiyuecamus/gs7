@@ -93,7 +93,7 @@ func BitRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.BitFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to bit failed, error: %s", err)
 		return
@@ -108,7 +108,7 @@ func BitRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.BitFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to bit failed, error: %s", err)
 		return
@@ -123,7 +123,7 @@ func ByteRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.ByteFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to byte failed, error: %s", err)
 		return
@@ -138,7 +138,7 @@ func ByteRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.ByteFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to byte failed, error: %s", err)
 		return
@@ -153,7 +153,7 @@ func CharRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.CharFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to char failed, error: %s", err)
 		return
@@ -168,7 +168,7 @@ func CharRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.CharFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to char failed, error: %s", err)
 		return
@@ -183,7 +183,7 @@ func IntRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.IntFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to int failed, error: %s", err)
 		return
@@ -198,7 +198,7 @@ func IntRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.IntFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to int failed, error: %s", err)
 		return
@@ -213,7 +213,7 @@ func WordRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.WordFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to word failed, error: %s", err)
 		return
@@ -228,7 +228,7 @@ func WordRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.WordFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to word failed, error: %s", err)
 		return
@@ -243,7 +243,7 @@ func DIntRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.DIntFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to dint failed, error: %s", err)
 		return
@@ -258,7 +258,7 @@ func DIntRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.DIntFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to dint failed, error: %s", err)
 		return
@@ -273,7 +273,7 @@ func DWordRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.DWordFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to dword failed, error: %s", err)
 		return
@@ -288,7 +288,7 @@ func DWordRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.DWordFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to dword failed, error: %s", err)
 		return
@@ -303,7 +303,7 @@ func RealRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.RealFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to real failed, error: %s", err)
 		return
@@ -318,7 +318,7 @@ func RealRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.RealFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to real failed, error: %s", err)
 		return
@@ -333,7 +333,7 @@ func TimeRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.TimeFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to time failed, error: %s", err)
 		return
@@ -348,7 +348,7 @@ func TimeRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.TimeFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to time failed, error: %s", err)
 		return
@@ -363,7 +363,7 @@ func DateRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.DateFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to date failed, error: %s", err)
 		return
@@ -378,7 +378,7 @@ func DateRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.DateFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to date failed, error: %s", err)
 		return
@@ -393,7 +393,7 @@ func TodRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.TimeOfDayFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to tod failed, error: %s", err)
 		return
@@ -408,7 +408,7 @@ func TodRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.TimeOfDayFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to tod failed, error: %s", err)
 		return
@@ -423,7 +423,7 @@ func DateTimeRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.DateTimeFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to datetime failed, error: %s", err)
 		return
@@ -438,7 +438,7 @@ func DateTimeRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.DateTimeFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to datetime failed, error: %s", err)
 		return
@@ -453,7 +453,7 @@ func DtlRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.DateTimeLongFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to dtl failed, error: %s", err)
 		return
@@ -468,7 +468,7 @@ func DtlRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.DateTimeLongFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to dtl failed, error: %s", err)
 		return
@@ -483,7 +483,7 @@ func S5TimeRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.S5TimeFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to s5time failed, error: %s", err)
 		return
@@ -498,7 +498,7 @@ func S5TimeRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.S5TimeFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to s5time failed, error: %s", err)
 		return
@@ -513,7 +513,7 @@ func StringRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.StringFromBytes(wait, c.GetPlcType())
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to string failed, error: %s", err)
 		return
@@ -528,7 +528,7 @@ func StringRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.StringFromBytes(wait, c.GetPlcType())
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to string failed, error: %s", err)
 		return
@@ -543,7 +543,7 @@ func WStringRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.WStringFromBytes(wait, c.GetPlcType())
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to wstring failed, error: %s", err)
 		return
@@ -558,7 +558,7 @@ func WStringRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.WStringFromBytes(wait, c.GetPlcType())
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to wstring failed, error: %s", err)
 		return
@@ -573,7 +573,7 @@ func CounterRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.CounterFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to counter failed, error: %s", err)
 		return
@@ -588,7 +588,7 @@ func CounterRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.CounterFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to counter failed, error: %s", err)
 		return
@@ -603,7 +603,7 @@ func TimerRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err := gs7.TimerFromBytes(wait)
+	b, err := wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to timer failed, error: %s", err)
 		return
@@ -618,7 +618,7 @@ func TimerRwAndParse(c gs7.Client, logger logging.Logger) {
 		return
 	}
 
-	b, err = gs7.TimerFromBytes(wait)
+	b, err = wait.Parse()
 	if err != nil {
 		logger.Errorf("Parse raw to timer failed, error: %s", err)
 		return

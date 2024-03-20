@@ -6,7 +6,7 @@ package gs7
 
 import (
 	"github.com/shiyuecamus/gs7/common"
-	"github.com/shiyuecamus/gs7/model"
+	"github.com/shiyuecamus/gs7/core"
 	"github.com/shiyuecamus/gs7/util"
 	"sync"
 	"time"
@@ -97,13 +97,13 @@ func NewToken(tt TokenType) TokenCompleter {
 	case TtSimple:
 		return &SimpleToken{complete: make(chan struct{})}
 	case TtRead:
-		return &ReadToken{baseToken[[]*model.DataItem]{complete: make(chan struct{})}}
+		return &ReadToken{baseToken[[]*core.DataItem]{complete: make(chan struct{})}}
 	case TtPdu:
-		return &PduToken{baseToken[*model.PDU]{complete: make(chan struct{})}}
+		return &PduToken{baseToken[*core.PDU]{complete: make(chan struct{})}}
 	case TtSingleRawRead:
-		return &SingleRawReadToken{baseToken[[]byte]{complete: make(chan struct{})}}
+		return &SingleRawReadToken{baseToken[RawInfo]{complete: make(chan struct{})}}
 	case TtBatchRawRead:
-		return &BatchRawReadToken{baseToken[[][]byte]{complete: make(chan struct{})}}
+		return &BatchRawReadToken{baseToken[[]RawInfo]{complete: make(chan struct{})}}
 	case TtSingleParsedRead:
 		return &SingleParsedReadToken{baseToken[any]{complete: make(chan struct{})}}
 	case TtBatchParsedRead:
@@ -113,21 +113,21 @@ func NewToken(tt TokenType) TokenCompleter {
 	case TtSzlIds:
 		return &SzlIdsToken{baseToken[[]uint16]{complete: make(chan struct{})}}
 	case TtCatalog:
-		return &CatalogToken{baseToken[model.Catalog]{complete: make(chan struct{})}}
+		return &CatalogToken{baseToken[core.Catalog]{complete: make(chan struct{})}}
 	case TtPlcStatus:
-		return &PlcStatusToken{baseToken[model.PlcStatus]{complete: make(chan struct{})}}
+		return &PlcStatusToken{baseToken[core.PlcStatus]{complete: make(chan struct{})}}
 	case TtUnitInfo:
-		return &UnitInfoToken{baseToken[model.UnitInfo]{complete: make(chan struct{})}}
+		return &UnitInfoToken{baseToken[core.UnitInfo]{complete: make(chan struct{})}}
 	case TtCommunicationInfo:
-		return &CommunicationInfoToken{baseToken[model.CommunicationInfo]{complete: make(chan struct{})}}
+		return &CommunicationInfoToken{baseToken[core.CommunicationInfo]{complete: make(chan struct{})}}
 	case TtProtectionInfo:
-		return &ProtectionInfoToken{baseToken[model.ProtectionInfo]{complete: make(chan struct{})}}
+		return &ProtectionInfoToken{baseToken[core.ProtectionInfo]{complete: make(chan struct{})}}
 	case TtBlockList:
-		return &BlockListToken{baseToken[[]model.ListBlockInfo]{complete: make(chan struct{})}}
+		return &BlockListToken{baseToken[[]core.ListBlockInfo]{complete: make(chan struct{})}}
 	case TtBlockListType:
-		return &BlockListTypeToken{baseToken[[]model.ListBlockTypeInfo]{complete: make(chan struct{})}}
+		return &BlockListTypeToken{baseToken[[]core.ListBlockTypeInfo]{complete: make(chan struct{})}}
 	case TtBlockInfo:
-		return &BlockInfoToken{baseToken[model.BlockInfo]{complete: make(chan struct{})}}
+		return &BlockInfoToken{baseToken[core.BlockInfo]{complete: make(chan struct{})}}
 	case TtClockRead:
 		return &ClockReadToken{baseToken[time.Time]{complete: make(chan struct{})}}
 	case TtBaseRead:
@@ -247,11 +247,11 @@ type ConnectToken struct {
 }
 
 type ReadToken struct {
-	baseToken[[]*model.DataItem]
+	baseToken[[]*core.DataItem]
 }
 
 type PduToken struct {
-	baseToken[*model.PDU]
+	baseToken[*core.PDU]
 }
 
 type UploadToken struct {
@@ -263,35 +263,35 @@ type SzlIdsToken struct {
 }
 
 type CatalogToken struct {
-	baseToken[model.Catalog]
+	baseToken[core.Catalog]
 }
 
 type PlcStatusToken struct {
-	baseToken[model.PlcStatus]
+	baseToken[core.PlcStatus]
 }
 
 type UnitInfoToken struct {
-	baseToken[model.UnitInfo]
+	baseToken[core.UnitInfo]
 }
 
 type CommunicationInfoToken struct {
-	baseToken[model.CommunicationInfo]
+	baseToken[core.CommunicationInfo]
 }
 
 type ProtectionInfoToken struct {
-	baseToken[model.ProtectionInfo]
+	baseToken[core.ProtectionInfo]
 }
 
 type BlockListToken struct {
-	baseToken[[]model.ListBlockInfo]
+	baseToken[[]core.ListBlockInfo]
 }
 
 type BlockListTypeToken struct {
-	baseToken[[]model.ListBlockTypeInfo]
+	baseToken[[]core.ListBlockTypeInfo]
 }
 
 type BlockInfoToken struct {
-	baseToken[model.BlockInfo]
+	baseToken[core.BlockInfo]
 }
 
 type ClockReadToken struct {
@@ -303,11 +303,11 @@ type BaseReadToken struct {
 }
 
 type SingleRawReadToken struct {
-	baseToken[[]byte]
+	baseToken[RawInfo]
 }
 
 type BatchRawReadToken struct {
-	baseToken[[][]byte]
+	baseToken[[]RawInfo]
 }
 
 type SingleParsedReadToken struct {

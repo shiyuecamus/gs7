@@ -15,6 +15,56 @@ import (
 	"unicode/utf16"
 )
 
+type RawInfo struct {
+	Value   []byte
+	Type    common.ParamVariableType
+	plcType common.PlcType
+}
+
+func (r RawInfo) Parse() (res any, err error) {
+	switch r.Type {
+	case common.PvtString:
+		return StringFromBytes(r.Value, r.plcType)
+	case common.PvtWString:
+		return WStringFromBytes(r.Value, r.plcType)
+	case common.PvtBit:
+		return BitFromBytes(r.Value)
+	case common.PvtByte:
+		return ByteFromBytes(r.Value)
+	case common.PvtChar:
+		return CharFromBytes(r.Value)
+	case common.PvtInt:
+		return IntFromBytes(r.Value)
+	case common.PvtWord:
+		return WordFromBytes(r.Value)
+	case common.PvtDInt:
+		return DIntFromBytes(r.Value)
+	case common.PvtDWord:
+		return DWordFromBytes(r.Value)
+	case common.PvtReal:
+		return RealFromBytes(r.Value)
+	case common.PvtTime:
+		return TimeFromBytes(r.Value)
+	case common.PvtDate:
+		return DateFromBytes(r.Value)
+	case common.PvtTimeOfDay:
+		return TimeOfDayFromBytes(r.Value)
+	case common.PvtDateTime:
+		return DateTimeFromBytes(r.Value)
+	case common.PvtDTL:
+		return DateTimeLongFromBytes(r.Value)
+	case common.PvtS5Time:
+		return S5TimeFromBytes(r.Value)
+	case common.PvtCounter:
+		return CounterFromBytes(r.Value)
+	case common.PvtTimer:
+		return TimerFromBytes(r.Value)
+	default:
+		err = common.ErrorWithCode(common.ErrVariableTypeUnrecognized, r.Type)
+		return
+	}
+}
+
 type Bit bool
 
 func BitFromBytes(bs []byte) (b Bit, err error) {

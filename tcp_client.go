@@ -7,8 +7,8 @@ package gs7
 import (
 	"github.com/panjf2000/gnet/v2"
 	"github.com/shiyuecamus/gs7/common"
+	"github.com/shiyuecamus/gs7/core"
 	"github.com/shiyuecamus/gs7/logging"
-	"github.com/shiyuecamus/gs7/model"
 	"github.com/shiyuecamus/gs7/util"
 	"sync"
 	"time"
@@ -134,7 +134,7 @@ func (t *s7TcpClient) OnTraffic(c gnet.Conn) (action gnet.Action) {
 		t.logger.Warnf("S7 tcp client received invalid package")
 		return
 	}
-	tpkt, err := model.TPKTFromBytes(tpktBuf)
+	tpkt, err := core.TPKTFromBytes(tpktBuf)
 	if err != nil {
 		t.logger.Warnf("S7 tcp client parse tpkt failed with error: [%v]", err)
 		return
@@ -147,7 +147,7 @@ func (t *s7TcpClient) OnTraffic(c gnet.Conn) (action gnet.Action) {
 	}
 	total := append(tpktBuf, nextBuf...)
 	t.logger.Debugf("S7 client received: % x", total)
-	ack, err := model.DataFromBytes(total)
+	ack, err := core.DataFromBytes(total)
 	var ctx RequestContext
 
 	switch ack.GetCOTP().GetPduType() {
