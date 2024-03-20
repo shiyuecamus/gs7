@@ -55,7 +55,6 @@ func main() {
     PlcType(common.S1500).
     Host(host).
     Port(port).
-    Port(102).
     Rack(rack).
     Slot(slot).
     Build()
