@@ -463,8 +463,12 @@ func StringFromBytes(bs []byte, plcType common.PlcType) (s String, err error) {
 
 func (s String) ToBytes(pduLength int) []byte {
 	bs := make([]byte, 0)
+	var buf bytes.Buffer
+	writer := transform.NewWriter(&buf, simplifiedchinese.GBK.NewEncoder())
+	_, _ = writer.Write([]byte(s))
+
 	bs = append(bs, strMaxLength(pduLength), byte(len(string(s))))
-	bs = append(bs, []byte(s)...)
+	bs = append(bs, buf.Bytes()...)
 	return bs
 }
 
