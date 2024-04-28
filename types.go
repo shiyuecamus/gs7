@@ -11,6 +11,9 @@ import (
 	"github.com/shiyuecamus/gs7/common"
 	"github.com/shiyuecamus/gs7/util"
 	"github.com/spf13/cast"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
+	"io"
 	"time"
 	"unicode/utf16"
 )
@@ -451,7 +454,10 @@ func StringFromBytes(bs []byte, plcType common.PlcType) (s String, err error) {
 	} else {
 		sub = bs[minLen:]
 	}
-	s = String(sub)
+	reader := transform.NewReader(bytes.NewReader(sub), simplifiedchinese.GBK.NewDecoder())
+	var res []byte
+	res, err = io.ReadAll(reader)
+	s = String(res)
 	return
 }
 
