@@ -24,6 +24,8 @@ func main() {
 		Slot(slot).
 		BuildAndConnect().
 		Async(func(c gs7.Client, err error) {
+			defer c.Disconnect()
+
 			if err != nil {
 				logger.Errorf("Failed to connect PLC, host: %s, port: %d, error: %s", host, port, err)
 				return

@@ -59,12 +59,13 @@ func main() {
     Slot(slot).
     Build()
   
-  _, err := c.Connect().Wait()
-  if err != nil {
+  
+  if _, err := c.Connect().Wait(); err != nil {
     logger.Errorf("Failed to connect PLC, host: %s, port: %d, error: %s", host, port, err)
     return
   }
-  
+  defer c.Disconnect()
+	
   // read
   res, err := c.ReadParsed("DB1.X0.0").Wait()
   if err != nil {

@@ -24,17 +24,17 @@ func main() {
 		Slot(slot).
 		Build()
 
-	_, err := c.Connect().Wait()
-	if err != nil {
+	if _, err := c.Connect().Wait(); err != nil {
 		logger.Errorf("Failed to connect PLC, host: %s, port: %d, error: %s", host, port, err)
 		return
 	}
+	defer c.Disconnect()
 
 	unitInfo, _ := c.GetUnitInfo().Wait()
-	protectionInfo, err := c.GetProtectionInfo().Wait()
-	plcStatus, err := c.GetPlcStatus().Wait()
-	catalog, err := c.GetCatalog().Wait()
-	communicationInfo, err := c.GetCommunicationInfo().Wait()
+	protectionInfo, _ := c.GetProtectionInfo().Wait()
+	plcStatus, _ := c.GetPlcStatus().Wait()
+	catalog, _ := c.GetCatalog().Wait()
+	communicationInfo, _ := c.GetCommunicationInfo().Wait()
 	logging.Infof("%s", unitInfo)
 	logging.Infof("%s", protectionInfo)
 	logging.Infof("%s", plcStatus)

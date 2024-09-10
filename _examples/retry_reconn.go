@@ -49,9 +49,9 @@ func main() {
 		MaxReconnectBackoff(time.Duration(1) * time.Minute).
 		Build()
 
-	_, err := c.Connect().Wait()
-	if err != nil {
+	if _, err := c.Connect().Wait(); err != nil {
 		logger.Errorf("Failed to connect PLC, host: %s, port: %d, error: %s", host, port, err)
 		return
 	}
+	defer c.Disconnect()
 }
