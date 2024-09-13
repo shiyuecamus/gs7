@@ -81,7 +81,7 @@ func ErrorWithCode(code int, params ...any) (err error) {
 	case ErrCliRequestItemInvalid:
 		return errors.New("request item invalid")
 	case ErrCliSzlPartsInvalid:
-		return errors.New("Szl parts invalid")
+		return errors.New("szl parts invalid")
 	case ErrCliConnectionNotNil:
 		return fmt.Errorf("connection for [%s:%d] is not nil", params...)
 	case ErrTcpRequestProcessing:

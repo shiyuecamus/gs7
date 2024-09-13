@@ -14,7 +14,6 @@ func main() {
 		slot = 1
 	)
 	logger := logging.GetDefaultLogger()
-
 	gs7.NewClientBuilder().
 		PlcType(common.S1500).
 		Host(host).

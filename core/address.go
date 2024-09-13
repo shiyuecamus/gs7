@@ -20,30 +20,28 @@ func ParseAddress(address string) (requestItem common.RequestItem, err error) {
 	address = strings.Replace(address, " ", "", -1)
 
 	split := strings.Split(address, ".")
-	var area common.AreaType
-	var variableType common.ParamVariableType
-	var dbNumber, byteAddress, bitAddress int
-	area, err = parseArea(split)
-	if err != nil {
+	var (
+		area                              common.AreaType
+		variableType                      common.ParamVariableType
+		dbNumber, byteAddress, bitAddress int
+	)
+
+	if area, err = parseArea(split); err != nil {
 		return
 	}
-	variableType, err = parseVariableType(split)
-	if err != nil {
-		return
-	}
-	dbNumber, err = parseDbNumber(split)
-	if err != nil {
-		return
-	}
-	byteAddress, err = parseByteAddress(split)
-	if err != nil {
-		return
-	}
-	bitAddress, err = parseBitAddress(split, variableType)
-	if err != nil {
+	if variableType, err = parseVariableType(split); err != nil {
 		return
 	}
 
+	if dbNumber, err = parseDbNumber(split); err != nil {
+		return
+	}
+	if byteAddress, err = parseByteAddress(split); err != nil {
+		return
+	}
+	if bitAddress, err = parseBitAddress(split, variableType); err != nil {
+		return
+	}
 	requestItem = NewStandardRequestItem(area, dbNumber, variableType, byteAddress, bitAddress, 1)
 	return
 }
@@ -76,7 +74,7 @@ func parseBitAddress(split []string, variableType common.ParamVariableType) (int
 		return 0, nil
 	default:
 		if len(split) == 2 && variableType == common.PvtBit {
-			return extractNumber(split[2])
+			return extractNumber(split[1])
 		}
 		return 0, nil
 	}
