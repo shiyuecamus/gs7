@@ -8,11 +8,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"github.com/panjf2000/gnet/v2"
-	"github.com/shiyuecamus/gs7/common"
-	"github.com/shiyuecamus/gs7/core"
-	"github.com/shiyuecamus/gs7/logging"
-	"github.com/shiyuecamus/gs7/util"
 	"math"
 	"net"
 	"strconv"
@@ -20,6 +15,12 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/panjf2000/gnet/v2"
+	"github.com/shiyuecamus/gs7/common"
+	"github.com/shiyuecamus/gs7/core"
+	"github.com/shiyuecamus/gs7/logging"
+	"github.com/shiyuecamus/gs7/util"
 )
 
 type client struct {
@@ -710,7 +711,7 @@ func (c *client) isoConnect() *core.PDU {
 		remote = 0x0300
 		break
 	case common.S300, common.S400, common.S1200, common.S1500:
-		remote += 0x101
+		remote += 0x0101
 		break
 	case common.Sinumerik828d:
 		local = 0x0400
