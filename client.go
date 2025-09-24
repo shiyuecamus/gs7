@@ -710,7 +710,7 @@ func (c *client) isoConnect() *core.PDU {
 		remote = 0x0300
 		break
 	case common.S300, common.S400, common.S1200, common.S1500:
-		remote += 0x20*uint16(c.rack) + uint16(c.slot)
+		remote += 0x101
 		break
 	case common.Sinumerik828d:
 		local = 0x0400
